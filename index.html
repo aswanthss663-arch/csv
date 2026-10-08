@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="CSV Graph Assistant – Upload your data, explore the graph, ask your data. A fully browser-based AI-style data intelligence platform." />
+  <title>CSV Graph Assistant – Data Intelligence Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="8" cy="8" r="4" fill="url(#g1)"/>
+            <circle cx="24" cy="8" r="4" fill="url(#g2)"/>
+            <circle cx="8" cy="24" r="4" fill="url(#g3)"/>
+            <circle cx="24" cy="24" r="4" fill="url(#g4)"/>
+            <line x1="8" y1="8" x2="24" y2="8" stroke="#00d4ff" stroke-width="1.5" opacity="0.6"/>
+            <line x1="8" y1="8" x2="8" y2="24" stroke="#00d4ff" stroke-width="1.5" opacity="0.6"/>
+            <line x1="24" y1="8" x2="24" y2="24" stroke="#7c3aed" stroke-width="1.5" opacity="0.6"/>
+            <line x1="8" y1="24" x2="24" y2="24" stroke="#7c3aed" stroke-width="1.5" opacity="0.6"/>
+            <line x1="8" y1="8" x2="24" y2="24" stroke="#00d4ff" stroke-width="1" opacity="0.3"/>
+            <line x1="24" y1="8" x2="8" y2="24" stroke="#7c3aed" stroke-width="1" opacity="0.3"/>
+            <defs>
+              <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#00d4ff"/><stop offset="1" stop-color="#0066ff"/></linearGradient>
+              <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#7c3aed"/><stop offset="1" stop-color="#00d4ff"/></linearGradient>
+              <linearGradient id="g3" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0066ff"/><stop offset="1" stop-color="#7c3aed"/></linearGradient>
+              <linearGradient id="g4" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#00d4ff"/><stop offset="1" stop-color="#7c3aed"/></linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div class="logo-text">
+          <span class="logo-name">CSV Graph</span>
+          <span class="logo-sub">Assistant</span>
+        </div>
+      </div>
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li><button class="nav-item active" data-section="overview">
+          <svg viewBox="0 0 24 24"><path d="M3 3h8v8H3zM13 3h8v8h-8zM3 13h8v8H3zM13 13h8v8h-8z"/></svg>
+          <span>Overview</span>
+        </button></li>
+        <li><button class="nav-item" data-section="upload">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+          <span>Upload Dataset</span>
+        </button></li>
+        <li><button class="nav-item" data-section="explorer">
+          <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+          <span>Dataset Explorer</span>
+        </button></li>
+        <li><button class="nav-item" data-section="graph">
+          <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/></svg>
+          <span>Graph View</span>
+        </button></li>
+        <li><button class="nav-item" data-section="ask">
+          <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          <span>Ask Your Data</span>
+        </button></li>
+        <li><button class="nav-item" data-section="history">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          <span>Query History</span>
+        </button></li>
+        <li><button class="nav-item" data-section="status">
+          <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          <span>System Status</span>
+        </button></li>
+      </ul>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-footer-brand">
+        <span class="brand-name">CSV Graph Assistant</span>
+        <div class="mode-badge">
+          <span class="mode-dot"></span>
+          <span>Browser Mode</span>
+        </div>
+      </div>
+      <p class="privacy-note">&#128274; Your data stays in your browser</p>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content" id="mainContent">
+    <!-- Top Bar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu">&#9776;</button>
+        <div class="page-title-area">
+          <h1 class="page-title" id="pageTitle">Overview</h1>
+          <p class="page-subtitle" id="pageSubtitle">Data Intelligence Platform</p>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <!-- Font Size Picker -->
+        <div class="fs-picker-wrap" id="fsPicker">
+          <button class="fs-trigger" id="fsTrigger" aria-haspopup="true" aria-expanded="false" aria-label="Change font size">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><text x="2" y="17" font-size="12" font-family="sans-serif" fill="currentColor" stroke="none">A</text><text x="11" y="20" font-size="16" font-family="sans-serif" fill="currentColor" stroke="none">A</text></svg>
+            <span id="fsTriggerLabel">100%</span>
+            <svg class="fs-caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+
+          <div class="fs-panel" id="fsPanel" role="dialog" aria-label="Font size settings" style="display:none;">
+            <div class="fs-panel-header">
+              <span class="fs-panel-title">Font Size</span>
+              <button class="fs-panel-close" id="fsPanelClose" aria-label="Close font size panel">✕</button>
+            </div>
+
+            <!-- Live value display -->
+            <div class="fs-value-display">
+              <span class="fs-current-val" id="fsCurrentVal">100</span>
+              <span class="fs-unit">%</span>
+            </div>
+
+            <!-- Slider -->
+            <div class="fs-slider-wrap">
+              <span class="fs-range-label">80%</span>
+              <input
+                type="range"
+                id="fsSlider"
+                class="fs-slider"
+                min="80" max="150" step="5" value="100"
+                aria-label="Font size slider"
+                aria-valuemin="80" aria-valuemax="150" aria-valuenow="100"
+              />
+              <span class="fs-range-label">150%</span>
+            </div>
+
+            <!-- Preset chips -->
+            <div class="fs-presets">
+              <button class="fs-preset" data-size="85"  aria-label="Small font size">Small</button>
+              <button class="fs-preset active" data-size="100" aria-label="Default font size">Default</button>
+              <button class="fs-preset" data-size="115" aria-label="Large font size">Large</button>
+              <button class="fs-preset" data-size="130" aria-label="Extra-large font size">X-Large</button>
+            </div>
+
+            <!-- Reset -->
+            <button class="fs-reset-btn" id="fsReset" aria-label="Reset to default font size">↺ Reset to Default</button>
+          </div>
+        </div>
+
+        <div class="topbar-divider"></div>
+        <div class="dataset-indicator">
+          <span class="indicator-dot inactive" id="indicatorDot"></span>
+          <span id="indicatorLabel">No Dataset</span>
+        </div>
+        <button class="btn btn-outline btn-sm" id="clearDatasetBtn" style="display:none;">Clear Dataset</button>
+      </div>
+    </header>
+
+    <!-- OVERVIEW SECTION -->
+    <section class="section active" id="section-overview">
+      <div class="hero-banner">
+        <div class="hero-content">
+          <h2 class="hero-title">CSV Graph Assistant</h2>
+          <p class="hero-tagline">Upload your data. Explore the graph. Ask your data.</p>
+          <p class="hero-desc">A fully browser-based data intelligence platform. No server, no API, no data leaves your device.</p>
+          <div class="hero-actions">
+            <button class="btn btn-primary" id="heroUploadBtn">Upload CSV</button>
+            <button class="btn btn-ghost" id="heroSampleBtn">Load Sample Dataset</button>
+          </div>
+        </div>
+        <div class="hero-visual">
+          <canvas id="heroCanvas" width="280" height="200"></canvas>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon records-icon">
+            <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8z"/></svg>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Total Records</span>
+            <span class="stat-value" id="statRecordsVal">0</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon columns-icon">
+            <svg viewBox="0 0 24 24"><path d="M3 3h18v4H3zM3 9h18v4H3zM3 15h18v6H3z"/></svg>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Total Columns</span>
+            <span class="stat-value" id="statColumnsVal">0</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon unique-icon">
+            <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Unique Values</span>
+            <span class="stat-value" id="statUniqueVal">0</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon nodes-icon">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="10" fill="none" stroke-dasharray="3 3"/></svg>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Graph Nodes</span>
+            <span class="stat-value" id="statNodesVal">0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-block">
+        <h3 class="section-block-title">Data Pipeline</h3>
+        <div class="pipeline">
+          <div class="pipeline-stage" id="pipe-csv">
+            <div class="pipeline-icon-wrap">&#128196;</div>
+            <span class="pipeline-label">CSV Parser</span>
+            <span class="pipeline-status idle" id="pipeStatusCsv">Idle</span>
+          </div>
+          <div class="pipeline-arrow">&#8594;</div>
+          <div class="pipeline-stage" id="pipe-analyzer">
+            <div class="pipeline-icon-wrap">&#128269;</div>
+            <span class="pipeline-label">Analyzer</span>
+            <span class="pipeline-status idle" id="pipeStatusAnalyzer">Idle</span>
+          </div>
+          <div class="pipeline-arrow">&#8594;</div>
+          <div class="pipeline-stage" id="pipe-graph">
+            <div class="pipeline-icon-wrap">&#128376;</div>
+            <span class="pipeline-label">Graph Engine</span>
+            <span class="pipeline-status idle" id="pipeStatusGraph">Idle</span>
+          </div>
+          <div class="pipeline-arrow">&#8594;</div>
+          <div class="pipeline-stage" id="pipe-query">
+            <div class="pipeline-icon-wrap">&#128172;</div>
+            <span class="pipeline-label">Query Engine</span>
+            <span class="pipeline-status idle" id="pipeStatusQuery">Idle</span>
+          </div>
+          <div class="pipeline-arrow">&#8594;</div>
+          <div class="pipeline-stage" id="pipe-answer">
+            <div class="pipeline-icon-wrap">&#9989;</div>
+            <span class="pipeline-label">Answer</span>
+            <span class="pipeline-status idle" id="pipeStatusAnswer">Idle</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-block" id="schemaBlock" style="display:none;">
+        <h3 class="section-block-title">Detected Schema</h3>
+        <div class="schema-grid" id="schemaGrid"></div>
+      </div>
+
+      <div class="no-dataset-notice" id="overviewNoDataset">
+        <div class="notice-icon">&#128194;</div>
+        <h3>No Dataset Loaded</h3>
+        <p>Upload a CSV file or load the sample dataset to get started.</p>
+        <div class="notice-actions">
+          <button class="btn btn-primary" id="noticeUploadBtn">Upload CSV</button>
+          <button class="btn btn-ghost" id="noticeSampleBtn">Load Sample</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- UPLOAD SECTION -->
+    <section class="section" id="section-upload">
+      <div class="upload-container">
+        <div class="upload-zone" id="uploadZone" tabindex="0" role="button" aria-label="Upload CSV file">
+          <div class="upload-zone-inner">
+            <div class="upload-icon-wrap">
+              <svg class="upload-icon" viewBox="0 0 64 64"><path d="M32 8L18 24h9v24h10V24h9z" fill="url(#ug1)"/><rect x="8" y="50" width="48" height="4" rx="2" fill="url(#ug1)"/><defs><linearGradient id="ug1" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#00d4ff"/><stop offset="1" stop-color="#7c3aed"/></linearGradient></defs></svg>
+            </div>
+            <h2 class="upload-title">Upload your CSV dataset</h2>
+            <p class="upload-subtitle">Drag and drop your CSV file here</p>
+            <p class="upload-or">or</p>
+            <button class="btn btn-primary" id="uploadBrowseBtn">Browse Files</button>
+            <input type="file" id="fileInput" accept=".csv" style="display:none;" aria-label="Select CSV file" />
+            <p class="upload-hint">Only .csv files accepted</p>
+          </div>
+        </div>
+
+        <div class="file-info-panel" id="fileInfoPanel" style="display:none;">
+          <div class="file-info-header">
+            <div class="file-icon">&#128202;</div>
+            <div class="file-meta">
+              <span class="file-name" id="fileName">Loading...</span>
+              <span class="file-size" id="fileSize"></span>
+            </div>
+            <div class="file-status valid" id="fileStatus">
+              <span>&#10003; Valid CSV</span>
+            </div>
+          </div>
+          <div class="file-stats-row">
+            <div class="file-stat">
+              <span class="fs-label">Records</span>
+              <span class="fs-value" id="fileRows">—</span>
+            </div>
+            <div class="file-stat">
+              <span class="fs-label">Columns</span>
+              <span class="fs-value" id="fileCols">—</span>
+            </div>
+            <div class="file-stat">
+              <span class="fs-label">Status</span>
+              <span class="fs-value" id="fileStatusText">Valid</span>
+            </div>
+          </div>
+          <div class="detected-headers" id="detectedHeaders"></div>
+          <div class="file-actions">
+            <button class="btn btn-primary" id="exploreDataBtn">Explore Dataset</button>
+            <button class="btn btn-ghost" id="reuploadBtn">Upload Another</button>
+          </div>
+        </div>
+
+        <div class="sample-section">
+          <div class="divider-line"><span>or try sample data</span></div>
+          <button class="btn btn-ghost sample-btn" id="uploadSampleBtn">
+            &#128203; Load Sample Employee Dataset
+          </button>
+          <p class="sample-desc">Demonstrates all features with 20 pre-loaded records</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- DATASET EXPLORER SECTION -->
+    <section class="section" id="section-explorer">
+      <div class="explorer-toolbar">
+        <div class="search-wrap">
+          <svg class="search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input type="text" id="searchInput" class="search-input" placeholder="Search across all columns..." aria-label="Search dataset" />
+        </div>
+        <div class="explorer-info">
+          <span id="explorerRowCount">0 records</span>
+          <span class="sep">&#8226;</span>
+          <span id="explorerColCount">0 columns</span>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <div id="tableContainer" class="table-container">
+          <div class="no-data-msg" id="explorerNoData">
+            <p>&#128194; No dataset loaded. <button class="link-btn" id="explorerUploadLink">Upload a CSV</button> to explore.</p>
+          </div>
+          <table id="dataTable" class="data-table" style="display:none;">
+            <thead id="tableHead"></thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="pagination" id="pagination" style="display:none;">
+        <button class="btn btn-sm btn-outline" id="prevPage" aria-label="Previous page">&#8592; Prev</button>
+        <div class="page-info">
+          <span>Page <strong id="currentPage">1</strong> of <strong id="totalPages">1</strong></span>
+        </div>
+        <button class="btn btn-sm btn-outline" id="nextPage" aria-label="Next page">Next &#8594;</button>
+      </div>
+    </section>
+
+    <!-- GRAPH VIEW SECTION -->
+    <section class="section" id="section-graph">
+      <div class="graph-layout">
+        <div class="graph-main">
+          <div class="graph-toolbar">
+            <div class="graph-toolbar-left">
+              <button class="btn btn-sm btn-outline" id="graphZoomIn" aria-label="Zoom in">+</button>
+              <button class="btn btn-sm btn-outline" id="graphZoomOut" aria-label="Zoom out">&#8722;</button>
+              <button class="btn btn-sm btn-outline" id="graphReset" aria-label="Reset view">&#8634; Reset</button>
+              <button class="btn btn-sm btn-outline" id="graphRebuild" aria-label="Rebuild graph">&#8635; Rebuild</button>
+            </div>
+            <div class="graph-legend">
+              <span class="legend-item"><span class="legend-dot record"></span>Record</span>
+              <span class="legend-item"><span class="legend-dot category"></span>Category</span>
+            </div>
+          </div>
+          <div class="canvas-container" id="canvasContainer">
+            <canvas id="graphCanvas" aria-label="Graph visualization"></canvas>
+            <div class="graph-no-data" id="graphNoData">
+              <div class="gnd-icon">&#128376;</div>
+              <h3>No Graph Data</h3>
+              <p>Upload a CSV dataset to generate the graph.</p>
+              <button class="btn btn-primary" id="graphUploadLink">Upload CSV</button>
+            </div>
+          </div>
+        </div>
+        <div class="graph-panel" id="graphPanel">
+          <div class="panel-header">Node Details</div>
+          <div class="panel-body" id="panelBody">
+            <div class="panel-empty">
+              <p>Click a node to see details</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ASK YOUR DATA SECTION -->
+    <section class="section" id="section-ask">
+      <div class="ask-layout">
+        <div class="ask-header">
+          <h2 class="ask-title">Ask Your Data</h2>
+          <p class="ask-subtitle">Ask questions in natural language and get answers directly from your uploaded dataset.</p>
+          <div class="ask-example-chips" id="exampleChips"></div>
+        </div>
+        <div class="chat-container" id="chatContainer">
+          <div class="chat-messages" id="chatMessages">
+            <div class="chat-welcome" id="chatWelcome">
+              <div class="welcome-icon">&#128172;</div>
+              <h3>Ready to answer your questions</h3>
+              <p id="chatWelcomeMsg">Upload a dataset first to start asking questions.</p>
+            </div>
+          </div>
+          <div class="chat-input-area">
+            <div class="chat-input-wrap">
+              <input type="text" id="questionInput" class="chat-input" placeholder="Ask a question about your data..." aria-label="Ask a question" />
+              <button class="chat-send-btn" id="sendBtn" aria-label="Send question">
+                <svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+              </button>
+            </div>
+            <p class="chat-hint">Try: "How many records are there?" &#8226; "Show all data" &#8226; "What columns are available?"</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- QUERY HISTORY SECTION -->
+    <section class="section" id="section-history">
+      <div class="history-toolbar">
+        <h3 class="history-title">Query History</h3>
+        <button class="btn btn-sm btn-danger" id="clearHistoryBtn">Clear History</button>
+      </div>
+      <div id="historyList" class="history-list">
+        <div class="history-empty" id="historyEmpty">
+          <div class="history-empty-icon">&#128220;</div>
+          <h3>No queries yet</h3>
+          <p>Your question history will appear here.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SYSTEM STATUS SECTION -->
+    <section class="section" id="section-status">
+      <div class="status-grid">
+        <div class="status-card">
+          <div class="status-header"><h3>System Components</h3></div>
+          <div class="status-list">
+            <div class="status-item">
+              <div class="status-info"><span class="status-name">Frontend Engine</span><span class="status-desc">HTML5 + CSS3 + Vanilla JS</span></div>
+              <span class="status-badge online">&#10003; Online</span>
+            </div>
+            <div class="status-item">
+              <div class="status-info"><span class="status-name">CSV Parser</span><span class="status-desc">Browser File API</span></div>
+              <span class="status-badge online">&#10003; Ready</span>
+            </div>
+            <div class="status-item">
+              <div class="status-info"><span class="status-name">Dataset Analyzer</span><span class="status-desc">Schema Detection Engine</span></div>
+              <span class="status-badge online">&#10003; Ready</span>
+            </div>
+            <div class="status-item">
+              <div class="status-info"><span class="status-name">Graph Engine</span><span class="status-desc">Canvas-based Visualization</span></div>
+              <span class="status-badge online">&#10003; Ready</span>
+            </div>
+            <div class="status-item">
+              <div class="status-info"><span class="status-name">Query Engine</span><span class="status-desc">Rule-based NL Processor</span></div>
+              <span class="status-badge online">&#10003; Ready</span>
+            </div>
+            <div class="status-item">
+              <div class="status-info"><span class="status-name">Local Storage</span><span class="status-desc">Browser Storage API</span></div>
+              <span class="status-badge online">&#10003; Available</span>
+            </div>
+            <div class="status-item">
+              <div class="status-info"><span class="status-name">Backend</span><span class="status-desc">Not Required</span></div>
+              <span class="status-badge neutral">&#8212; Not Required</span>
+            </div>
+            <div class="status-item">
+              <div class="status-info"><span class="status-name">Database</span><span class="status-desc">Browser Simulation</span></div>
+              <span class="status-badge neutral">&#9889; Browser Simulation</span>
+            </div>
+          </div>
+        </div>
+        <div class="status-card">
+          <div class="status-header"><h3>Dataset Information</h3></div>
+          <div class="status-list">
+            <div class="status-item"><span class="status-name">Loaded File</span><span id="statusFileName" class="status-value">None</span></div>
+            <div class="status-item"><span class="status-name">Records</span><span id="statusRows" class="status-value">0</span></div>
+            <div class="status-item"><span class="status-name">Columns</span><span id="statusCols" class="status-value">0</span></div>
+            <div class="status-item"><span class="status-name">Graph Nodes</span><span id="statusNodes" class="status-value">0</span></div>
+            <div class="status-item"><span class="status-name">Graph Edges</span><span id="statusEdges" class="status-value">0</span></div>
+            <div class="status-item"><span class="status-name">Queries Run</span><span id="statusQueries" class="status-value">0</span></div>
+          </div>
+        </div>
+        <div class="status-card privacy-card">
+          <div class="privacy-icon">&#128274;</div>
+          <h3>100% Private</h3>
+          <p>Your data stays in your browser. No server, no external API, no data transmission. Everything runs locally.</p>
+          <div class="tech-tags">
+            <span class="tech-tag">File API</span>
+            <span class="tech-tag">FileReader API</span>
+            <span class="tech-tag">Canvas API</span>
+            <span class="tech-tag">localStorage</span>
+            <span class="tech-tag">Drag &amp; Drop API</span>
+            <span class="tech-tag">ES6+</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="alert" aria-live="polite"></div>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+  <script src="script.js"></script>
+</body>
+</html>
