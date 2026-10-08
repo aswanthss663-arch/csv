@@ -11,7 +11,175 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- SIDEBAR -->
+
+  <!-- =====================================================
+       AUTH OVERLAY (Login / Sign Up)
+  ===================================================== -->
+  <div class="auth-overlay" id="authOverlay">
+    <canvas class="auth-bg-canvas" id="authBgCanvas"></canvas>
+
+    <!-- Single centered card -->
+    <div class="auth-card" id="authCard">
+
+      <!-- Logo (shared) -->
+      <div class="auth-logo">
+        <svg width="36" height="36" viewBox="0 0 32 32" fill="none">
+          <circle cx="8"  cy="8"  r="4" fill="url(#al1)"/>
+          <circle cx="24" cy="8"  r="4" fill="url(#al2)"/>
+          <circle cx="8"  cy="24" r="4" fill="url(#al3)"/>
+          <circle cx="24" cy="24" r="4" fill="url(#al4)"/>
+          <line x1="8" y1="8" x2="24" y2="8"  stroke="#00d4ff" stroke-width="1.5" opacity="0.7"/>
+          <line x1="8" y1="8" x2="8"  y2="24" stroke="#00d4ff" stroke-width="1.5" opacity="0.7"/>
+          <line x1="24" y1="8" x2="24" y2="24" stroke="#7c3aed" stroke-width="1.5" opacity="0.7"/>
+          <line x1="8" y1="24" x2="24" y2="24" stroke="#7c3aed" stroke-width="1.5" opacity="0.7"/>
+          <line x1="8" y1="8" x2="24" y2="24" stroke="#00d4ff" stroke-width="1" opacity="0.3"/>
+          <line x1="24" y1="8" x2="8"  y2="24" stroke="#7c3aed" stroke-width="1" opacity="0.3"/>
+          <defs>
+            <linearGradient id="al1" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#00d4ff"/><stop offset="1" stop-color="#0066ff"/></linearGradient>
+            <linearGradient id="al2" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#7c3aed"/><stop offset="1" stop-color="#00d4ff"/></linearGradient>
+            <linearGradient id="al3" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0066ff"/><stop offset="1" stop-color="#7c3aed"/></linearGradient>
+            <linearGradient id="al4" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#00d4ff"/><stop offset="1" stop-color="#7c3aed"/></linearGradient>
+          </defs>
+        </svg>
+        <div>
+          <div class="auth-brand-name">CSV Graph Assistant</div>
+          <div class="auth-brand-tag">Data Intelligence Platform</div>
+        </div>
+      </div>
+
+      <!-- Tab switcher -->
+      <div class="auth-tabs" role="tablist">
+        <button class="auth-tab active" id="tabLogin"  role="tab" aria-selected="true"  aria-controls="loginView">Sign In</button>
+        <button class="auth-tab"        id="tabSignup" role="tab" aria-selected="false" aria-controls="signupView">Create Account</button>
+        <div class="auth-tab-indicator" id="authTabIndicator"></div>
+      </div>
+
+      <!-- ===== LOGIN VIEW ===== -->
+      <div class="auth-view active" id="loginView" role="tabpanel">
+        <div class="auth-view-header">
+          <h2 class="auth-heading">Welcome back</h2>
+          <p class="auth-sub">Sign in to access your workspace</p>
+        </div>
+
+        <form class="auth-form" id="loginForm" novalidate autocomplete="on">
+          <div class="auth-field">
+            <label class="auth-label" for="loginEmail">Email address</label>
+            <div class="auth-input-wrap">
+              <svg class="auth-input-icon" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              <input type="email" id="loginEmail" class="auth-input" placeholder="you@example.com" autocomplete="email" required />
+            </div>
+            <span class="auth-error" id="loginEmailErr"></span>
+          </div>
+
+          <div class="auth-field">
+            <label class="auth-label" for="loginPassword">Password</label>
+            <div class="auth-input-wrap">
+              <svg class="auth-input-icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+              <input type="password" id="loginPassword" class="auth-input" placeholder="Enter your password" autocomplete="current-password" required />
+              <button type="button" class="auth-eye-btn" id="loginEyeBtn" aria-label="Toggle password">
+                <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+            <span class="auth-error" id="loginPasswordErr"></span>
+          </div>
+
+          <div class="auth-remember-row">
+            <label class="auth-checkbox-label">
+              <input type="checkbox" id="rememberMe" class="auth-checkbox" />
+              <span class="auth-checkbox-custom"></span>
+              Remember me
+            </label>
+          </div>
+
+          <span class="auth-error auth-form-error" id="loginFormErr"></span>
+
+          <button type="submit" class="auth-submit-btn" id="loginSubmitBtn">
+            <span class="auth-btn-text">Sign In</span>
+            <span class="auth-btn-spinner" id="loginSpinner" style="display:none;">&#9679;&#9679;&#9679;</span>
+          </button>
+        </form>
+
+        <div class="auth-divider"><span>or continue with</span></div>
+        <button class="auth-demo-btn" id="loginDemoBtn">&#9654; Guest / Demo Mode</button>
+
+        <p class="auth-switch-text">
+          Don&#39;t have an account?
+          <button class="auth-switch-btn" id="goToSignup">Create one &rarr;</button>
+        </p>
+      </div>
+
+      <!-- ===== SIGN UP VIEW ===== -->
+      <div class="auth-view" id="signupView" role="tabpanel" style="display:none;">
+        <div class="auth-view-header">
+          <h2 class="auth-heading">Create account</h2>
+          <p class="auth-sub">Start exploring your data for free</p>
+        </div>
+
+        <form class="auth-form" id="signupForm" novalidate autocomplete="on">
+          <div class="auth-field">
+            <label class="auth-label" for="signupName">Full name</label>
+            <div class="auth-input-wrap">
+              <svg class="auth-input-icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <input type="text" id="signupName" class="auth-input" placeholder="Your full name" autocomplete="name" required />
+            </div>
+            <span class="auth-error" id="signupNameErr"></span>
+          </div>
+
+          <div class="auth-field">
+            <label class="auth-label" for="signupEmail">Email address</label>
+            <div class="auth-input-wrap">
+              <svg class="auth-input-icon" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              <input type="email" id="signupEmail" class="auth-input" placeholder="you@example.com" autocomplete="email" required />
+            </div>
+            <span class="auth-error" id="signupEmailErr"></span>
+          </div>
+
+          <div class="auth-field">
+            <label class="auth-label" for="signupPassword">Password</label>
+            <div class="auth-input-wrap">
+              <svg class="auth-input-icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+              <input type="password" id="signupPassword" class="auth-input" placeholder="Min. 6 characters" autocomplete="new-password" required />
+              <button type="button" class="auth-eye-btn" id="signupEyeBtn" aria-label="Toggle password">
+                <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+            <span class="auth-error" id="signupPasswordErr"></span>
+          </div>
+
+          <div class="pw-strength-wrap" id="pwStrengthWrap" style="display:none;">
+            <div class="pw-strength-bar"><div class="pw-strength-fill" id="pwStrengthFill"></div></div>
+            <span class="pw-strength-label" id="pwStrengthLabel">Weak</span>
+          </div>
+
+          <div class="auth-field">
+            <label class="auth-label" for="signupConfirm">Confirm password</label>
+            <div class="auth-input-wrap">
+              <svg class="auth-input-icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+              <input type="password" id="signupConfirm" class="auth-input" placeholder="Re-enter password" autocomplete="new-password" required />
+            </div>
+            <span class="auth-error" id="signupConfirmErr"></span>
+          </div>
+
+          <span class="auth-error auth-form-error" id="signupFormErr"></span>
+
+          <button type="submit" class="auth-submit-btn" id="signupSubmitBtn">
+            <span class="auth-btn-text">Create Account</span>
+            <span class="auth-btn-spinner" id="signupSpinner" style="display:none;">&#9679;&#9679;&#9679;</span>
+          </button>
+        </form>
+
+        <p class="auth-switch-text" style="margin-top:16px;">
+          Already have an account?
+          <button class="auth-switch-btn" id="goToLogin">&larr; Sign in</button>
+        </p>
+      </div>
+
+    </div><!-- /auth-card -->
+
+    <p class="auth-privacy-note">&#128274; All data stays in your browser &mdash; nothing is sent to any server.</p>
+  </div><!-- /authOverlay -->
+
+    <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <div class="logo">
@@ -74,6 +242,10 @@
         </button></li>
       </ul>
     </nav>
+      <button class="auth-logout-btn" id="logoutBtn" title="Sign out">
+        <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+        <span>Sign Out</span>
+      </button>
     <div class="sidebar-footer">
       <div class="sidebar-footer-brand">
         <span class="brand-name">CSV Graph Assistant</span>
@@ -97,6 +269,7 @@
           <p class="page-subtitle" id="pageSubtitle">Data Intelligence Platform</p>
         </div>
       </div>
+        <div class="auth-user-chip" id="authUserChip" style="display:none;"><span class="user-avatar" id="userAvatar">?</span><span class="user-name-label" id="userNameLabel">User</span></div>
       <div class="topbar-right">
         <!-- Font Size Picker -->
         <div class="fs-picker-wrap" id="fsPicker">
@@ -501,6 +674,195 @@
       </div>
     </section>
   </main>
+
+
+  <!-- =====================================================
+       PROFILE DRAWER
+  ===================================================== -->
+  <div class="profile-backdrop" id="profileBackdrop"></div>
+  <aside class="profile-drawer" id="profileDrawer" aria-label="User profile" role="dialog">
+
+    <div class="profile-drawer-header">
+      <h2 class="profile-drawer-title">My Profile</h2>
+      <button class="profile-close-btn" id="profileCloseBtn" aria-label="Close profile">&#10005;</button>
+    </div>
+
+    <!-- Avatar + name -->
+    <div class="profile-hero">
+      <div class="profile-avatar-wrap">
+        <!-- Clickable avatar with camera overlay -->
+        <div class="profile-avatar-btn" id="profileAvatarBtn" title="Click to change photo" aria-label="Upload profile picture" role="button" tabindex="0">
+          <div class="profile-avatar" id="profileAvatar">?</div>
+          <div class="avatar-upload-overlay">
+            <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            <span>Change</span>
+          </div>
+        </div>
+        <!-- Hidden file input -->
+        <input type="file" id="avatarFileInput" accept="image/*" style="display:none;" aria-label="Select profile picture" />
+        <!-- Remove photo button (shown only when photo is set) -->
+        <button class="avatar-remove-btn" id="avatarRemoveBtn" style="display:none;" title="Remove photo" aria-label="Remove profile picture">&#10005; Remove</button>
+        <!-- Colour swatches (hidden when photo is set) -->
+        <div class="avatar-color-row" id="avatarColorRow">
+          <button class="avatar-color-swatch active" data-color="cyan"   style="background:linear-gradient(135deg,#00d4ff,#0066ff)" aria-label="Cyan theme"></button>
+          <button class="avatar-color-swatch"        data-color="violet" style="background:linear-gradient(135deg,#7c3aed,#9d5af5)" aria-label="Violet theme"></button>
+          <button class="avatar-color-swatch"        data-color="green"  style="background:linear-gradient(135deg,#10b981,#059669)" aria-label="Green theme"></button>
+          <button class="avatar-color-swatch"        data-color="orange" style="background:linear-gradient(135deg,#f59e0b,#ef4444)" aria-label="Orange theme"></button>
+          <button class="avatar-color-swatch"        data-color="pink"   style="background:linear-gradient(135deg,#ec4899,#7c3aed)" aria-label="Pink theme"></button>
+        </div>
+        <span class="avatar-hint-text" id="avatarHintText">Click avatar to upload photo</span>
+      </div>
+      <div class="profile-hero-info">
+        <div class="profile-display-name" id="profileDisplayName">—</div>
+        <div class="profile-display-email" id="profileDisplayEmail">—</div>
+        <div class="profile-badge" id="profileBadge">
+          <span class="mode-dot"></span> Active
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats row -->
+    <div class="profile-stats-row">
+      <div class="profile-stat">
+        <span class="profile-stat-val" id="profileStatQueries">0</span>
+        <span class="profile-stat-lbl">Queries</span>
+      </div>
+      <div class="profile-stat">
+        <span class="profile-stat-val" id="profileStatDatasets">0</span>
+        <span class="profile-stat-lbl">Datasets</span>
+      </div>
+      <div class="profile-stat">
+        <span class="profile-stat-val" id="profileStatJoined">—</span>
+        <span class="profile-stat-lbl">Joined</span>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="profile-tabs">
+      <button class="profile-tab active" data-ptab="details">Details</button>
+      <button class="profile-tab"        data-ptab="security">Security</button>
+      <button class="profile-tab"        data-ptab="activity">Activity</button>
+    </div>
+
+    <!-- ===== DETAILS TAB ===== -->
+    <div class="profile-tab-panel active" id="ptab-details">
+      <form class="profile-form" id="profileForm" novalidate>
+        <div class="profile-form-section">
+          <div class="pf-label">Full Name</div>
+          <div class="pf-input-wrap">
+            <input type="text" id="pfName" class="pf-input" placeholder="Your full name" />
+          </div>
+          <span class="pf-error" id="pfNameErr"></span>
+        </div>
+
+        <div class="profile-form-section">
+          <div class="pf-label">Email Address</div>
+          <div class="pf-input-wrap">
+            <input type="email" id="pfEmail" class="pf-input" placeholder="you@example.com" />
+          </div>
+          <span class="pf-error" id="pfEmailErr"></span>
+        </div>
+
+        <div class="profile-form-section">
+          <div class="pf-label">Account Type</div>
+          <div class="pf-readonly" id="pfAccountType">Standard</div>
+        </div>
+
+        <div class="profile-form-section">
+          <div class="pf-label">Member Since</div>
+          <div class="pf-readonly" id="pfMemberSince">—</div>
+        </div>
+
+        <div class="pf-actions">
+          <button type="submit" class="btn btn-primary btn-sm" id="saveProfileBtn">Save Changes</button>
+          <span class="pf-saved-msg" id="pfSavedMsg"></span>
+        </div>
+      </form>
+    </div>
+
+    <!-- ===== SECURITY TAB ===== -->
+    <div class="profile-tab-panel" id="ptab-security" style="display:none;">
+      <form class="profile-form" id="securityForm" novalidate>
+        <div class="profile-form-section">
+          <div class="pf-label">Current Password</div>
+          <div class="pf-input-wrap">
+            <input type="password" id="pfCurrentPw" class="pf-input" placeholder="Enter current password" />
+            <button type="button" class="pf-eye" id="pfEye1" aria-label="Toggle">
+              <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <span class="pf-error" id="pfCurrentPwErr"></span>
+        </div>
+
+        <div class="profile-form-section">
+          <div class="pf-label">New Password</div>
+          <div class="pf-input-wrap">
+            <input type="password" id="pfNewPw" class="pf-input" placeholder="Min. 6 characters" />
+            <button type="button" class="pf-eye" id="pfEye2" aria-label="Toggle">
+              <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <div class="pw-strength-wrap" id="pfPwStrengthWrap" style="display:none;">
+            <div class="pw-strength-bar"><div class="pw-strength-fill" id="pfPwFill"></div></div>
+            <span class="pw-strength-label" id="pfPwLabel">Weak</span>
+          </div>
+          <span class="pf-error" id="pfNewPwErr"></span>
+        </div>
+
+        <div class="profile-form-section">
+          <div class="pf-label">Confirm New Password</div>
+          <div class="pf-input-wrap">
+            <input type="password" id="pfConfirmPw" class="pf-input" placeholder="Re-enter new password" />
+          </div>
+          <span class="pf-error" id="pfConfirmPwErr"></span>
+        </div>
+
+        <div class="pf-actions">
+          <button type="submit" class="btn btn-primary btn-sm" id="saveSecurityBtn">Update Password</button>
+          <span class="pf-saved-msg" id="pfSecSavedMsg"></span>
+        </div>
+      </form>
+
+      <div class="danger-zone">
+        <div class="danger-zone-title">&#9888; Danger Zone</div>
+        <p class="danger-zone-desc">Permanently delete your account and all stored data from this browser.</p>
+        <button class="btn btn-danger btn-sm" id="deleteAccountBtn">Delete Account</button>
+      </div>
+    </div>
+
+    <!-- ===== ACTIVITY TAB ===== -->
+    <div class="profile-tab-panel" id="ptab-activity" style="display:none;">
+      <div class="activity-summary">
+        <div class="activity-summary-item">
+          <span class="activity-icon">&#128202;</span>
+          <div>
+            <div class="activity-val" id="actDatasets">0</div>
+            <div class="activity-lbl">Datasets Loaded</div>
+          </div>
+        </div>
+        <div class="activity-summary-item">
+          <span class="activity-icon">&#128172;</span>
+          <div>
+            <div class="activity-val" id="actQueries">0</div>
+            <div class="activity-lbl">Questions Asked</div>
+          </div>
+        </div>
+        <div class="activity-summary-item">
+          <span class="activity-icon">&#9989;</span>
+          <div>
+            <div class="activity-val" id="actGrounded">0</div>
+            <div class="activity-lbl">Grounded Answers</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pf-label" style="margin-bottom:10px;">Recent Questions</div>
+      <div class="activity-history" id="activityHistory">
+        <p class="activity-empty">No queries yet.</p>
+      </div>
+    </div>
+
+  </aside><!-- /profileDrawer -->
 
   <div class="toast" id="toast" role="alert" aria-live="polite"></div>
   <div class="sidebar-overlay" id="sidebarOverlay"></div>

@@ -1673,9 +1673,771 @@ function initFontSize() {
   });
 }
 
+
+/* ============================================================
+   AUTH MODULE  —  Login / Sign Up (localStorage-based)
+   ============================================================ */
+
+const AUTH_USERS_KEY   = 'csvga_users';
+const AUTH_SESSION_KEY = 'csvga_session';
+
+/* ---- Storage helpers ---- */
+function getUsers() {
+  try { return JSON.parse(localStorage.getItem(AUTH_USERS_KEY) || '[]'); }
+  catch (e) { return []; }
+}
+function saveUsers(users) {
+  localStorage.setItem(AUTH_USERS_KEY, JSON.stringify(users));
+}
+function getSession() {
+  try { return JSON.parse(localStorage.getItem(AUTH_SESSION_KEY) || 'null'); }
+  catch (e) { return null; }
+}
+function saveSession(user) {
+  localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(user));
+}
+function clearSession() {
+  localStorage.removeItem(AUTH_SESSION_KEY);
+}
+
+/* ---- Password strength ---- */
+function calcPasswordStrength(pw) {
+  let score = 0;
+  if (pw.length >= 6)  score++;
+  if (pw.length >= 10) score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  if (score <= 1) return { level: 'Weak',   pct: 20,  color: '#ef4444' };
+  if (score <= 2) return { level: 'Fair',   pct: 45,  color: '#f59e0b' };
+  if (score <= 3) return { level: 'Good',   pct: 70,  color: '#3b82f6' };
+  return              { level: 'Strong', pct: 100, color: '#10b981' };
+}
+
+/* ---- Toggle password eye ---- */
+function setupEye(inputId, btnId) {
+  const input = document.getElementById(inputId);
+  const btn   = document.getElementById(btnId);
+  if (!input || !btn) return;
+  btn.addEventListener('click', () => {
+    const show = input.type === 'password';
+    input.type = show ? 'text' : 'password';
+    btn.innerHTML = show
+      ? '<svg viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'
+      : '<svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+    btn.querySelector('svg').style.cssText = 'width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;';
+  });
+}
+
+/* ---- Show auth error ---- */
+function setFieldError(inputId, errId, msg) {
+  const input = document.getElementById(inputId);
+  const err   = document.getElementById(errId);
+  if (input) input.classList.toggle('error', !!msg);
+  if (err)   err.textContent = msg || '';
+}
+function clearFieldError(inputId, errId) {
+  setFieldError(inputId, errId, '');
+  const input = document.getElementById(inputId);
+  if (input) input.classList.remove('error');
+}
+
+/* ---- Reveal main app ---- */
+function enterApp(user) {
+  const overlay = document.getElementById('authOverlay');
+  overlay.classList.add('hidden');
+  setTimeout(() => { overlay.style.display = 'none'; }, 560);
+
+  // Show user chip in topbar
+  const chip  = document.getElementById('authUserChip');
+  const avatar = document.getElementById('userAvatar');
+  const nameLabel = document.getElementById('userNameLabel');
+  if (chip && user) {
+    avatar.textContent  = (user.name || user.email || 'U')[0].toUpperCase();
+    nameLabel.textContent = user.name || user.email.split('@')[0];
+    chip.style.display = '';
+  }
+
+  // Greeting toast
+  const greeting = user.isGuest ? 'Guest mode — sample data loaded' : `Welcome back, ${user.name || user.email.split('@')[0]}!`;
+  showToast(greeting, 'success', 3500);
+
+  // Auto-load sample for guest
+  if (user.isGuest && !AppState.dataset) {
+    setTimeout(loadSampleDataset, 600);
+  }
+}
+
+/* ---- Logout ---- */
+function doLogout() {
+  if (!confirm('Sign out of CSV Graph Assistant?')) return;
+  clearSession();
+  location.reload();
+}
+
+/* ---- Auth background canvas animation ---- */
+function startAuthBgAnim() {
+  const canvas = document.getElementById('authBgCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+  window.addEventListener('resize', () => {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+  });
+
+  const nodes = Array.from({ length: 28 }, () => ({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    vx: (Math.random() - 0.5) * 0.5,
+    vy: (Math.random() - 0.5) * 0.5,
+    r: Math.random() * 3 + 1.5,
+    color: Math.random() > 0.5 ? '#00d4ff' : '#7c3aed',
+  }));
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const dx = nodes[j].x - nodes[i].x, dy = nodes[j].y - nodes[i].y;
+        const d  = Math.sqrt(dx * dx + dy * dy);
+        if (d < 130) {
+          ctx.beginPath();
+          ctx.moveTo(nodes[i].x, nodes[i].y);
+          ctx.lineTo(nodes[j].x, nodes[j].y);
+          ctx.strokeStyle = `rgba(0,212,255,${0.22 * (1 - d / 130)})`;
+          ctx.lineWidth = 0.8;
+          ctx.stroke();
+        }
+      }
+    }
+    nodes.forEach(n => {
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+      ctx.fillStyle = n.color;
+      ctx.globalAlpha = 0.65;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      n.x += n.vx; n.y += n.vy;
+      if (n.x < 0 || n.x > canvas.width)  n.vx *= -1;
+      if (n.y < 0 || n.y > canvas.height) n.vy *= -1;
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+/* ---- MAIN AUTH INIT ---- */
+function initAuth() {
+  // If already logged in, skip overlay
+  const session = getSession();
+  if (session) { enterApp(session); return; }
+
+  startAuthBgAnim();
+
+  const overlay      = document.getElementById('authOverlay');
+  const tabLogin     = document.getElementById('tabLogin');
+  const tabSignup    = document.getElementById('tabSignup');
+  const indicator    = document.getElementById('authTabIndicator');
+  const loginView    = document.getElementById('loginView');
+  const signupView   = document.getElementById('signupView');
+  const loginForm    = document.getElementById('loginForm');
+  const signupForm   = document.getElementById('signupForm');
+  const demoBtn      = document.getElementById('loginDemoBtn');
+  const logoutBtn    = document.getElementById('logoutBtn');
+  const pwInput      = document.getElementById('signupPassword');
+  const pwWrap       = document.getElementById('pwStrengthWrap');
+  const pwFill       = document.getElementById('pwStrengthFill');
+  const pwLabel      = document.getElementById('pwStrengthLabel');
+  const goSignupBtn  = document.getElementById('goToSignup');
+  const goLoginBtn   = document.getElementById('goToLogin');
+
+  /* -- Tab switching helper -- */
+  function showTab(which) {
+    // which: 'login' | 'signup'
+    const isSignup = which === 'signup';
+
+    tabLogin.classList.toggle('active', !isSignup);
+    tabSignup.classList.toggle('active', isSignup);
+    indicator.classList.toggle('right', isSignup);
+
+    // Animate out current, animate in next
+    const hideView = isSignup ? loginView  : signupView;
+    const showView = isSignup ? signupView : loginView;
+
+    hideView.classList.remove('active');
+    hideView.style.display = 'none';
+
+    showView.style.display = 'block';
+    // Force reflow so animation triggers
+    void showView.offsetWidth;
+    showView.classList.add('active');
+  }
+
+  // Wire tab buttons
+  tabLogin.addEventListener('click',  () => showTab('login'));
+  tabSignup.addEventListener('click', () => showTab('signup'));
+  goSignupBtn.addEventListener('click', () => showTab('signup'));
+  goLoginBtn.addEventListener('click',  () => showTab('login'));
+
+  // Password strength
+  pwInput.addEventListener('input', () => {
+    const v = pwInput.value;
+    pwWrap.style.display = v ? 'flex' : 'none';
+    const s = calcPasswordStrength(v);
+    pwFill.style.width      = s.pct + '%';
+    pwFill.style.background = s.color;
+    pwLabel.textContent     = s.level;
+    pwLabel.style.color     = s.color;
+  });
+
+  // Eye toggles
+  setupEye('loginPassword', 'loginEyeBtn');
+  setupEye('signupPassword','signupEyeBtn');
+
+  /* ---------- LOGIN ---------- */
+  loginForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const email = document.getElementById('loginEmail').value.trim();
+    const pw    = document.getElementById('loginPassword').value;
+    let valid   = true;
+
+    clearFieldError('loginEmail',    'loginEmailErr');
+    clearFieldError('loginPassword', 'loginPasswordErr');
+    const formErr = document.getElementById('loginFormErr');
+    formErr.classList.remove('visible');
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setFieldError('loginEmail','loginEmailErr','Please enter a valid email address.'); valid=false;
+    }
+    if (!pw) {
+      setFieldError('loginPassword','loginPasswordErr','Password is required.'); valid=false;
+    }
+    if (!valid) return;
+
+    const btn = document.getElementById('loginSubmitBtn');
+    btn.disabled = true;
+    document.getElementById('loginSpinner').style.display = '';
+    document.querySelector('#loginSubmitBtn .auth-btn-text').style.display = 'none';
+
+    setTimeout(() => {
+      btn.disabled = false;
+      document.getElementById('loginSpinner').style.display = 'none';
+      document.querySelector('#loginSubmitBtn .auth-btn-text').style.display = '';
+
+      const users = getUsers();
+      const user  = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+      if (!user) {
+        formErr.textContent = 'No account found with that email. Create one first.';
+        formErr.classList.add('visible'); return;
+      }
+      if (user.password !== btoa(pw)) {
+        formErr.textContent = 'Incorrect password. Please try again.';
+        formErr.classList.add('visible');
+        setFieldError('loginPassword','loginPasswordErr','Wrong password.'); return;
+      }
+      const remember = document.getElementById('rememberMe').checked;
+      const sessionData = { email: user.email, name: user.name, remember };
+      saveSession(sessionData);
+      enterApp(sessionData);
+    }, 900);
+  });
+
+  /* ---------- SIGN UP ---------- */
+  signupForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const name    = document.getElementById('signupName').value.trim();
+    const email   = document.getElementById('signupEmail').value.trim();
+    const pw      = document.getElementById('signupPassword').value;
+    const confirm = document.getElementById('signupConfirm').value;
+    let valid     = true;
+
+    ['signupName','signupEmail','signupPassword','signupConfirm'].forEach(id =>
+      clearFieldError(id, id+'Err')
+    );
+    const formErr = document.getElementById('signupFormErr');
+    formErr.classList.remove('visible');
+
+    if (!name || name.length < 2) {
+      setFieldError('signupName','signupNameErr','Please enter your full name (min 2 chars).'); valid=false;
+    }
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setFieldError('signupEmail','signupEmailErr','Please enter a valid email address.'); valid=false;
+    }
+    if (!pw || pw.length < 6) {
+      setFieldError('signupPassword','signupPasswordErr','Password must be at least 6 characters.'); valid=false;
+    }
+    if (pw !== confirm) {
+      setFieldError('signupConfirm','signupConfirmErr','Passwords do not match.'); valid=false;
+    }
+    if (!valid) return;
+
+    const btn = document.getElementById('signupSubmitBtn');
+    btn.disabled = true;
+    document.getElementById('signupSpinner').style.display = '';
+    document.querySelector('#signupSubmitBtn .auth-btn-text').style.display = 'none';
+
+    setTimeout(() => {
+      btn.disabled = false;
+      document.getElementById('signupSpinner').style.display = 'none';
+      document.querySelector('#signupSubmitBtn .auth-btn-text').style.display = '';
+
+      const users = getUsers();
+      if (users.find(u => u.email.toLowerCase() === email.toLowerCase())) {
+        formErr.textContent = 'An account with this email already exists.';
+        formErr.classList.add('visible');
+        setFieldError('signupEmail','signupEmailErr','Email already registered.'); return;
+      }
+      const newUser = { name, email, password: btoa(pw), createdAt: new Date().toISOString() };
+      users.push(newUser);
+      saveUsers(users);
+      const sessionData = { email, name };
+      saveSession(sessionData);
+      enterApp(sessionData);
+    }, 1000);
+  });
+
+  /* ---------- GUEST ---------- */
+  demoBtn.addEventListener('click', () => enterApp({ name:'Guest', email:'guest@demo.com', isGuest:true }));
+
+  /* ---------- LOGOUT ---------- */
+  if (logoutBtn) logoutBtn.addEventListener('click', doLogout);
+}
+
+
+/* ============================================================
+   PROFILE DRAWER MODULE
+   ============================================================ */
+
+const AVATAR_GRADIENTS = {
+  cyan:   'linear-gradient(135deg,#00d4ff,#0066ff)',
+  violet: 'linear-gradient(135deg,#7c3aed,#9d5af5)',
+  green:  'linear-gradient(135deg,#10b981,#059669)',
+  orange: 'linear-gradient(135deg,#f59e0b,#ef4444)',
+  pink:   'linear-gradient(135deg,#ec4899,#7c3aed)',
+};
+const AVATAR_COLOR_KEY = 'csvga_avatarColor';
+
+function getAvatarColor() {
+  return localStorage.getItem(AVATAR_COLOR_KEY) || 'cyan';
+}
+function setAvatarColor(color) {
+  localStorage.setItem(AVATAR_COLOR_KEY, color);
+}
+
+/* Apply avatar gradient everywhere the avatar appears */
+function applyAvatarColor(color) {
+  const grad = AVATAR_GRADIENTS[color] || AVATAR_GRADIENTS.cyan;
+  const els = [
+    document.getElementById('profileAvatar'),
+    document.getElementById('userAvatar'),
+  ];
+  els.forEach(el => { if (el) el.style.background = grad; });
+  // Update swatch active state
+  document.querySelectorAll('.avatar-color-swatch').forEach(sw => {
+    sw.classList.toggle('active', sw.dataset.color === color);
+  });
+}
+
+/* Open the profile drawer */
+function openProfileDrawer() {
+  const session = getSession();
+  if (!session) return;
+
+  const drawer   = document.getElementById('profileDrawer');
+  const backdrop = document.getElementById('profileBackdrop');
+
+  // Populate fields
+  document.getElementById('profileDisplayName').textContent = session.name || session.email;
+  document.getElementById('profileDisplayEmail').textContent = session.email;
+  document.getElementById('profileAvatar').textContent      = (session.name || session.email || '?')[0].toUpperCase();
+  // Apply saved profile photo (overrides initials if exists)
+  const savedPhoto = getAvatarPhoto();
+  const _initial   = (session.name || session.email || '?');
+  applyAvatarPhoto(savedPhoto, _initial);
+  document.getElementById('profileAvatar').style.background = AVATAR_GRADIENTS[getAvatarColor()];
+
+  document.getElementById('pfName').value  = session.name  || '';
+  document.getElementById('pfEmail').value = session.email || '';
+
+  // Get full user record for joined date
+  const users = getUsers();
+  const user  = users.find(u => u.email === session.email);
+  const joined = user ? new Date(user.createdAt).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' }) : 'Guest';
+  document.getElementById('pfMemberSince').textContent = joined;
+  document.getElementById('pfAccountType').textContent = session.isGuest ? 'Guest / Demo' : 'Standard';
+
+  // Stats
+  const qCount = AppState.queryCount || 0;
+  const dsLoaded = AppState.dataset ? 1 : 0;
+  document.getElementById('profileStatQueries').textContent = qCount;
+  document.getElementById('profileStatDatasets').textContent = dsLoaded;
+  document.getElementById('profileStatJoined').textContent = user ? new Date(user.createdAt).toLocaleDateString('en-US',{month:'short',year:'numeric'}) : '—';
+  document.getElementById('actQueries').textContent  = qCount;
+  document.getElementById('actDatasets').textContent = dsLoaded;
+  const groundedCount = AppState.queryHistory.filter(h => h.grounded).length;
+  document.getElementById('actGrounded').textContent = groundedCount;
+
+  // Activity history
+  const histEl = document.getElementById('activityHistory');
+  if (AppState.queryHistory.length === 0) {
+    histEl.innerHTML = '<p class="activity-empty">No queries yet.</p>';
+  } else {
+    histEl.innerHTML = AppState.queryHistory.slice(0, 20).map(h => `
+      <div class="activity-entry">
+        <span class="activity-entry-q" title="${escapeHtml(h.question)}">${escapeHtml(h.question)}</span>
+        <span class="activity-entry-badge ${h.grounded ? 'g' : 'ng'}">${h.grounded ? '✓ Grounded' : '⚠ Not grounded'}</span>
+      </div>`).join('');
+  }
+
+  // Open
+  backdrop.classList.add('open');
+  drawer.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeProfileDrawer() {
+  document.getElementById('profileDrawer').classList.remove('open');
+  document.getElementById('profileBackdrop').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function initProfileDrawer() {
+  const drawer      = document.getElementById('profileDrawer');
+  const backdrop    = document.getElementById('profileBackdrop');
+  const closeBtn    = document.getElementById('profileCloseBtn');
+  const userChip    = document.getElementById('authUserChip');
+  const profileForm = document.getElementById('profileForm');
+  const secForm     = document.getElementById('securityForm');
+
+  if (!drawer) return;
+
+  // Open triggers
+  if (userChip) userChip.addEventListener('click', openProfileDrawer);
+  closeBtn.addEventListener('click', closeProfileDrawer);
+  backdrop.addEventListener('click', closeProfileDrawer);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeProfileDrawer(); });
+
+  // Tab switching
+  document.querySelectorAll('.profile-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.profile-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.profile-tab-panel').forEach(p => { p.style.display = 'none'; p.classList.remove('active'); });
+      tab.classList.add('active');
+      const panel = document.getElementById('ptab-' + tab.dataset.ptab);
+      if (panel) { panel.style.display = 'block'; panel.classList.add('active'); }
+    });
+  });
+
+  // Avatar colour swatches
+  applyAvatarColor(getAvatarColor());
+  document.querySelectorAll('.avatar-color-swatch').forEach(sw => {
+    sw.addEventListener('click', () => {
+      setAvatarColor(sw.dataset.color);
+      applyAvatarColor(sw.dataset.color);
+      document.getElementById('profileAvatar').style.background = AVATAR_GRADIENTS[sw.dataset.color];
+    });
+  });
+
+  // ---- DETAILS FORM — Save ----
+  profileForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const newName  = document.getElementById('pfName').value.trim();
+    const newEmail = document.getElementById('pfEmail').value.trim();
+    let valid = true;
+
+    document.getElementById('pfNameErr').textContent  = '';
+    document.getElementById('pfEmailErr').textContent = '';
+    document.getElementById('pfName').classList.remove('error');
+    document.getElementById('pfEmail').classList.remove('error');
+
+    if (!newName || newName.length < 2) {
+      document.getElementById('pfNameErr').textContent = 'Name must be at least 2 characters.';
+      document.getElementById('pfName').classList.add('error'); valid = false;
+    }
+    if (!newEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
+      document.getElementById('pfEmailErr').textContent = 'Please enter a valid email.';
+      document.getElementById('pfEmail').classList.add('error'); valid = false;
+    }
+    if (!valid) return;
+
+    // Update user in storage
+    const users = getUsers();
+    const session = getSession();
+    const idx = users.findIndex(u => u.email === session.email);
+    if (idx !== -1) {
+      users[idx].name  = newName;
+      users[idx].email = newEmail;
+      saveUsers(users);
+    }
+    // Update session
+    const newSession = { ...session, name: newName, email: newEmail };
+    saveSession(newSession);
+
+    // Refresh display
+    document.getElementById('profileDisplayName').textContent = newName;
+    document.getElementById('profileDisplayEmail').textContent = newEmail;
+    document.getElementById('profileAvatar').textContent = newName[0].toUpperCase();
+    document.getElementById('userAvatar').textContent    = newName[0].toUpperCase();
+    document.getElementById('userNameLabel').textContent = newName;
+
+    const msg = document.getElementById('pfSavedMsg');
+    msg.textContent = '✓ Saved!';
+    msg.classList.add('show');
+    setTimeout(() => msg.classList.remove('show'), 2500);
+    showToast('Profile updated successfully.', 'success');
+  });
+
+  // ---- SECURITY FORM — Change Password ----
+  // Eye toggles inside drawer
+  function pfEye(inputId, btnId) {
+    const inp = document.getElementById(inputId);
+    const btn = document.getElementById(btnId);
+    if (!inp || !btn) return;
+    btn.addEventListener('click', () => {
+      inp.type = inp.type === 'password' ? 'text' : 'password';
+    });
+  }
+  pfEye('pfCurrentPw','pfEye1');
+  pfEye('pfNewPw','pfEye2');
+
+  // Strength on new pw
+  document.getElementById('pfNewPw').addEventListener('input', () => {
+    const v = document.getElementById('pfNewPw').value;
+    const wrap = document.getElementById('pfPwStrengthWrap');
+    wrap.style.display = v ? 'flex' : 'none';
+    const s = calcPasswordStrength(v);
+    document.getElementById('pfPwFill').style.width      = s.pct + '%';
+    document.getElementById('pfPwFill').style.background = s.color;
+    document.getElementById('pfPwLabel').textContent     = s.level;
+    document.getElementById('pfPwLabel').style.color     = s.color;
+  });
+
+  secForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const cur     = document.getElementById('pfCurrentPw').value;
+    const nw      = document.getElementById('pfNewPw').value;
+    const confirm = document.getElementById('pfConfirmPw').value;
+    let valid = true;
+
+    ['pfCurrentPw','pfNewPw','pfConfirmPw'].forEach(id => {
+      document.getElementById(id).classList.remove('error');
+    });
+    ['pfCurrentPwErr','pfNewPwErr','pfConfirmPwErr'].forEach(id => {
+      document.getElementById(id).textContent = '';
+    });
+
+    const session = getSession();
+    const users   = getUsers();
+    const user    = users.find(u => u.email === session.email);
+
+    if (!cur) {
+      document.getElementById('pfCurrentPwErr').textContent = 'Current password required.';
+      document.getElementById('pfCurrentPw').classList.add('error'); valid = false;
+    } else if (user && user.password !== btoa(cur)) {
+      document.getElementById('pfCurrentPwErr').textContent = 'Current password is incorrect.';
+      document.getElementById('pfCurrentPw').classList.add('error'); valid = false;
+    }
+    if (!nw || nw.length < 6) {
+      document.getElementById('pfNewPwErr').textContent = 'New password must be at least 6 characters.';
+      document.getElementById('pfNewPw').classList.add('error'); valid = false;
+    }
+    if (nw !== confirm) {
+      document.getElementById('pfConfirmPwErr').textContent = 'Passwords do not match.';
+      document.getElementById('pfConfirmPw').classList.add('error'); valid = false;
+    }
+    if (!valid) return;
+
+    // Save new password
+    if (user) {
+      user.password = btoa(nw);
+      saveUsers(users);
+    }
+    document.getElementById('pfCurrentPw').value = '';
+    document.getElementById('pfNewPw').value = '';
+    document.getElementById('pfConfirmPw').value = '';
+    document.getElementById('pfPwStrengthWrap').style.display = 'none';
+
+    const msg = document.getElementById('pfSecSavedMsg');
+    msg.textContent = '✓ Password updated!';
+    msg.classList.add('show');
+    setTimeout(() => msg.classList.remove('show'), 2500);
+    showToast('Password changed successfully.', 'success');
+  });
+
+  // ---- DELETE ACCOUNT ----
+  document.getElementById('deleteAccountBtn').addEventListener('click', () => {
+    if (!confirm('Permanently delete your account and all stored data? This cannot be undone.')) return;
+    const session = getSession();
+    const users   = getUsers().filter(u => u.email !== session.email);
+    saveUsers(users);
+    clearSession();
+    clearLocalStorage();
+    showToast('Account deleted.', 'error', 2000);
+    setTimeout(() => location.reload(), 1800);
+  });
+}
+
+
+
+/* ============================================================
+   PROFILE PICTURE MODULE
+   ============================================================ */
+
+const AVATAR_PHOTO_KEY = 'csvga_avatarPhoto';
+
+function getAvatarPhoto() {
+  return localStorage.getItem(AVATAR_PHOTO_KEY) || null;
+}
+
+function saveAvatarPhoto(dataUrl) {
+  try {
+    localStorage.setItem(AVATAR_PHOTO_KEY, dataUrl);
+    return true;
+  } catch (e) {
+    // localStorage quota exceeded (large images)
+    showToast('Image too large. Please use a smaller photo (under 500 KB).', 'error', 3500);
+    return false;
+  }
+}
+
+function removeAvatarPhoto() {
+  localStorage.removeItem(AVATAR_PHOTO_KEY);
+}
+
+/* Render the photo (or fallback to initials) everywhere */
+function applyAvatarPhoto(dataUrl, initial) {
+  const profileAvatar = document.getElementById('profileAvatar');
+  const topbarAvatar  = document.getElementById('userAvatar');
+  const removeBtn     = document.getElementById('avatarRemoveBtn');
+  const colorRow      = document.getElementById('avatarColorRow');
+  const hintText      = document.getElementById('avatarHintText');
+
+  if (dataUrl) {
+    // Profile drawer avatar
+    if (profileAvatar) {
+      profileAvatar.innerHTML = `<img src="${dataUrl}" alt="Profile photo" draggable="false" />`;
+      profileAvatar.style.background = 'none';
+      profileAvatar.style.fontSize   = '0';
+    }
+    // Topbar chip avatar
+    if (topbarAvatar) {
+      topbarAvatar.innerHTML = `<img src="${dataUrl}" alt="Profile photo" draggable="false" />`;
+      topbarAvatar.style.background = 'none';
+      topbarAvatar.style.color      = 'transparent';
+    }
+    // Show remove button, hide colour swatches
+    if (removeBtn)  removeBtn.style.display  = '';
+    if (colorRow)   colorRow.style.display   = 'none';
+    if (hintText)   hintText.textContent     = 'Click to change photo';
+  } else {
+    // Restore initials
+    const letter = (initial || '?')[0].toUpperCase();
+    if (profileAvatar) {
+      profileAvatar.innerHTML        = letter;
+      profileAvatar.style.fontSize   = '';
+      applyAvatarColor(getAvatarColor()); // restore gradient
+    }
+    if (topbarAvatar) {
+      topbarAvatar.innerHTML         = letter;
+      topbarAvatar.style.color       = '';
+      applyAvatarColor(getAvatarColor());
+    }
+    if (removeBtn)  removeBtn.style.display  = 'none';
+    if (colorRow)   colorRow.style.display   = '';
+    if (hintText)   hintText.textContent     = 'Click avatar to upload photo';
+  }
+}
+
+function initAvatarUpload() {
+  const btn       = document.getElementById('profileAvatarBtn');
+  const fileInput = document.getElementById('avatarFileInput');
+  const removeBtn = document.getElementById('avatarRemoveBtn');
+
+  if (!btn || !fileInput) return;
+
+  // Click avatar → open file picker
+  btn.addEventListener('click', () => fileInput.click());
+  btn.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); }
+  });
+
+  // File selected
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+
+    // Validate type
+    if (!file.type.startsWith('image/')) {
+      showToast('Please select an image file (JPG, PNG, GIF, WebP…)', 'error'); return;
+    }
+    // Soft-warn on large files (>800 KB before encoding)
+    if (file.size > 800 * 1024) {
+      showToast('Large image — compressing…', 'info', 1500);
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const originalDataUrl = e.target.result;
+
+      // Compress using canvas (max 256×256, quality 0.82)
+      const img = new Image();
+      img.onload = function() {
+        const MAX = 256;
+        const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+        const canvas = document.createElement('canvas');
+        canvas.width  = Math.round(img.width  * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext('2d');
+        // Circle crop
+        ctx.beginPath();
+        ctx.arc(canvas.width / 2, canvas.height / 2, Math.min(canvas.width, canvas.height) / 2, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const compressed = canvas.toDataURL('image/jpeg', 0.82);
+
+        const session = getSession();
+        const initial = session ? (session.name || session.email || '?') : '?';
+
+        if (saveAvatarPhoto(compressed)) {
+          applyAvatarPhoto(compressed, initial);
+          showToast('Profile photo updated! ✓', 'success');
+        }
+      };
+      img.src = originalDataUrl;
+    };
+    reader.readAsDataURL(file);
+    fileInput.value = ''; // allow re-selecting same file
+  });
+
+  // Remove photo
+  if (removeBtn) {
+    removeBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      if (!confirm('Remove your profile photo?')) return;
+      removeAvatarPhoto();
+      const session = getSession();
+      const initial = session ? (session.name || session.email || '?') : '?';
+      applyAvatarPhoto(null, initial);
+      showToast('Profile photo removed.', 'info');
+    });
+  }
+
+  // Auto-apply saved photo on init
+  const saved   = getAvatarPhoto();
+  const session = getSession();
+  const initial = session ? (session.name || session.email || '?') : '?';
+  if (saved) applyAvatarPhoto(saved, initial);
+}
+
+
 // Start when DOM is ready
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
+  document.addEventListener('DOMContentLoaded', () => { initAuth(); init(); initProfileDrawer(); initAvatarUpload(); });
 } else {
+  initAuth();
   init();
+  initProfileDrawer();
+  initAvatarUpload();
 }
